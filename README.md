@@ -6,7 +6,7 @@ An unpolished Clojure Minesweeper clone with **an automatic solver**.
 
 Download source from
 
-```git@github.com:RokLenarcic/Minesweeper.git```
+`https://github.com/RokLenarcic/Minesweeper.git`
 
 ## Usage
 
