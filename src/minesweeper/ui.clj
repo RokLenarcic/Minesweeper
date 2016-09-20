@@ -25,9 +25,9 @@
                                       (core/reveal %1 %2 @minefield)
                                       (core/mark %1 %2)) (user-data e)))
         menus (menubar :items [(button :action (action :name "New" :handler (fn [_] (swap! game #(update % :id inc)))))
-                               "Rows" (text :text rows :listen [:action (settings-changer :rows)])
-                               "Cols" (text :text cols :listen [:action (settings-changer :cols)])
-                               "Mines" (text :text mines :listen [:action (settings-changer :mines)])])
+                               "Rows" (text :text rows :listen [:focus (settings-changer :rows) :action (settings-changer :rows)])
+                               "Cols" (text :text cols :listen [:focus (settings-changer :cols) :action (settings-changer :cols)])
+                               "Mines" (text :text mines :listen [:focus (settings-changer :mines) :action (settings-changer :mines)])])
         frame (frame :title "Minesweeper" :width 0 :height 0 :content "HA" :menubar menus :on-close :exit)]
     (keys/map-key frame "menu A" (fn [e] (when-let [x (core/ask @revealed)]
                                            (let [r @revealed m @minefield
