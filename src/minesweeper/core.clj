@@ -69,7 +69,7 @@
        :members (into #{} (find-around this (block-type-pred :?) p)) :origin p}
       {:mines 9 :members (list) :origin p}))
   (dead? [_] (some #(some (block-type-pred :x) %) blocks))
-  (won? [_] (= mines (reduce + (map #(count (filter (block-type-pred #{:? :!}) %)) blocks))))
+  (won? [_] (and (not (dead? _)) (= mines (reduce + (map #(count (filter (block-type-pred #{:? :!}) %)) blocks)))))
   (reveal [this point from-field]
     (loop [[point & tail] (list (get-in blocks point))
            revealed this]
