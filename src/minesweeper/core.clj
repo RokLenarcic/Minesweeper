@@ -52,6 +52,7 @@
        :mark (mapcat :members (filter #(>= (:min-mines %) (count (:members %))) group-info))})))
 
 (defn ask [revealed]
+  "Ask for solutions, returns a map with :reveal and :mark keys"
   (let [groups (filter #(not-empty (:members %)) (map #(group revealed %) (flatten (:blocks revealed))))
         easy-picks {:reveal (map :origin (filter #(zero? (:mines %)) groups))
                     :mark (mapcat :members (filter #(<= (count (:members %)) (:mines %)) groups))}]
