@@ -7,18 +7,12 @@
             [seesaw.font :refer [font]]
             [minesweeper.core :as core])
   (:gen-class)
-  (:import (java.awt Font)))
+  (:import (java.awt Font Graphics2D)
+           (java.awt.event MouseEvent)))
 
 (defn- disable-canvas [frame] ((user-data (select frame [:#canvas]))))
 
 (defn- get-color [val] (get {:? :grey 0 :black 1 :white 2 :white 3 :white 4 :white 5 :white 6 :white 7 :white 8 :white :x :red :! :orange} val))
-
-(defn- draw-block [g x y width height val font-info]
-  (g/draw g
-          (g/rect (* x width) (* y height) width height)
-          (g/style :foreground :black :background (get-color val))
-          (g/string-shape (+ (:x-off font-info) (* x width)) (+ (:y-off font-info) (* (inc y) height)) (str (last (seq (str val)))))
-          (g/style :foreground :black :font (:font font-info))))
 
 (def ^:private choose-font
   (memoize (fn [font-render-ctx block-w block-h]
@@ -29,28 +23,35 @@
                                   :y-off (- 0 (+ block-h (.getY (.getMaxCharBounds fnt font-render-ctx))))})]
                (->> (iterate #(+ 0.5 %) 8)
                     (map #(font :size % :name :monospaced))
-                    (filter #(> (* -1 (.getY (.getMaxCharBounds % font-render-ctx))) desired-height))
+                    (filter #(> (* -1 (.getY (.getMaxCharBounds ^Font % font-render-ctx))) desired-height))
                     (first)
                     (to-font-map))))))
 
-(defn- get-event-coords [field e]
-  (let [cellw (/ (width e) (:cols field))
-        cellh (/ (height e) (:rows field))]
-    [(int (/ (.getY e) cellh)) (int (/ (.getX e) cellw))]))
+(defn- block-renderer [^Graphics2D g rows cols]
+  (let [block-w (/ (.getWidth (.getClipBounds g)) cols)
+        block-h (/ (.getHeight (.getClipBounds g)) rows)
+        font-info (choose-font (.getFontRenderContext g) block-w block-h)]
+    (fn [row col val]
+      (g/draw g
+              (g/rect (* col block-w) (* row block-h) block-w block-h)
+              (g/style :foreground :black :background (get-color val))
+              (g/string-shape (+ (:x-off font-info) (* col block-w)) (+ (:y-off font-info) (* (inc row) block-h)) (str (last (seq (str val)))))
+              (g/style :foreground :black :font (:font font-info))))))
+
+(defn- get-event-coords [field ^MouseEvent e]
+  [(int (/ (.getY e) (/ (height e) (:rows field)))) (int (/ (.getX e) (/ (width e) (:cols field))))])
 
 (defn create-window [rows cols mines]
   (let [game (atom {:mines 0, :cols 0, :rows 0, :id 0})
         minefield (atom (core/generate-minefield 10 9 8))
         revealed (atom (core/unrevealed-field @minefield))
         settings-changer (fn [key] #(let [val (read-string (value %))] (when (integer? val) (swap! game assoc key val))))
-        paint (fn [c g]
-                (let [r @revealed
-                      block-w (/ (width c) (:cols r))
-                      block-h (/ (height c) (:rows r))
-                      font-info (choose-font (.getFontRenderContext g) block-w block-h)]
-                  (doseq [x (range (:cols r))
-                          y (range (:rows r))]
-                    (draw-block g x y block-w block-h (get-in r [:blocks y x :val]) font-info))))
+        paint (fn [_ g]
+                (let [{:keys [rows cols blocks]} @revealed
+                      renderer (block-renderer g rows cols)]
+                  (doseq [row (range rows)
+                          col (range cols)]
+                    (renderer row col (get-in blocks [row col :val])))))
         click-action (fn [e] (swap! revealed
                                     #(if (= (mouse/button e) :left)
                                       (core/reveal %1 (get-event-coords %1 %2) @minefield)
