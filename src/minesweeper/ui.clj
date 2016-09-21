@@ -27,9 +27,9 @@
                     (first)
                     (to-font-map))))))
 
-(defn- block-renderer [^Graphics2D g rows cols]
-  (let [block-w (/ (.getWidth (.getClipBounds g)) cols)
-        block-h (/ (.getHeight (.getClipBounds g)) rows)
+(defn- block-renderer [c ^Graphics2D g rows cols]
+  (let [block-w (/ (width c) cols)
+        block-h (/ (height c) rows)
         font-info (choose-font (.getFontRenderContext g) block-w block-h)]
     (fn [row col val]
       (g/draw g
@@ -39,16 +39,16 @@
               (g/style :foreground :black :font (:font font-info))))))
 
 (defn- get-event-coords [field ^MouseEvent e]
-  [(int (/ (.getY e) (/ (height e) (:rows field)))) (int (/ (.getX e) (/ (width e) (:cols field))))])
+  [(int (/ (* (.getY e) (:rows field)) (height e))) (int (/ (* (.getX e) (:cols field)) (width e)))])
 
 (defn create-window [rows cols mines]
   (let [game (atom {:mines 0, :cols 0, :rows 0, :id 0})
         minefield (atom (core/generate-minefield 10 9 8))
         revealed (atom (core/unrevealed-field @minefield))
         settings-changer (fn [key] #(let [val (read-string (value %))] (when (integer? val) (swap! game assoc key val))))
-        paint (fn [_ g]
+        paint (fn [c g]
                 (let [{:keys [rows cols blocks]} @revealed
-                      renderer (block-renderer g rows cols)]
+                      renderer (block-renderer c g rows cols)]
                   (doseq [row (range rows)
                           col (range cols)]
                     (renderer row col (get-in blocks [row col :val])))))
