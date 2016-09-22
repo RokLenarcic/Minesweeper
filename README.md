@@ -4,16 +4,27 @@ An unpolished Clojure Minesweeper clone with **an automatic solver**.
 
 ## Installation
 
-Download source from
+Download the standalone jar from releases section (e.g. for 0.1.0):
+
+`https://github.com/RokLenarcic/Minesweeper/releases/download/v0.1.0/minesweeper-0.1.0-standalone.jar`
+
+### OR
+
+Download source from:
 
 `https://github.com/RokLenarcic/Minesweeper.git`
 
 ## Usage
 
-Using Leiningen:
+Run standalone jar:
+
+`java -jar minesweeper-0.1.0-standalone.jar`
+
+### OR
+
+Using Leiningen, from source:
 
     lein run
-
 
 It's a standard minesweeper.
 
