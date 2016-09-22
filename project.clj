@@ -1,6 +1,6 @@
-(defproject minesweeper "0.1.0-SNAPSHOT"
+(defproject minesweeper "0.1.0"
   :description "Minesweeper clone with a solver"
-  :url "http://example.com/FIXME"
+  :url "https://github.com/RokLenarcic/Minesweeper"
   :license {:name "GNU General Public License v3.0"
             :url "http://www.gnu.org/licenses/gpl-3.0.txt"
             :year 2016
