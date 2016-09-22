@@ -12,7 +12,8 @@
 
 (defn- disable-canvas [frame] ((user-data (select frame [:#canvas]))))
 
-(defn- get-color [val] (get {:? :grey 0 :black 1 :white 2 :white 3 :white 4 :white 5 :white 6 :white 7 :white 8 :white :x :red :! :orange} val))
+(defn- get-bg-color [val] (get {:? "#d0d0d0" 0 :black 1 :white 2 :white 3 :white 4 :white 5 :white 6 :white 7 :white 8 :white :x "#e02222" :! :orange} val))
+(defn- get-fg-color [val] (get {:? "#d0d0d0" 0 :black 1 :green 2 :navy 3 :darkred 4 :mediumvioletred 5 :darkturquoise 6 :khaki 7 :salmon 8 :gold :x "#111111" :! "#111111"} val))
 
 (def ^:private choose-font
   (memoize (fn [font-render-ctx block-w block-h]
@@ -34,9 +35,9 @@
     (fn [row col val]
       (g/draw g
               (g/rect (* col block-w) (* row block-h) block-w block-h)
-              (g/style :foreground :black :background (get-color val))
+              (g/style :foreground "#111111" :background (get-bg-color val))
               (g/string-shape (+ (:x-off font-info) (* col block-w)) (+ (:y-off font-info) (* (inc row) block-h)) (str (last (seq (str val)))))
-              (g/style :foreground :black :font (:font font-info))))))
+              (g/style :foreground (get-fg-color val) :font (:font font-info))))))
 
 (defn- get-event-coords [field ^MouseEvent e]
   [(int (/ (* (.getY e) (:rows field)) (height e))) (int (/ (* (.getX e) (:cols field)) (width e)))])
@@ -75,13 +76,17 @@
                   (fn [f]
                     [(max 300 (* (:cols f) 20)) :by (max 300 (* (:rows f) 20))]))
                 (b/property frame :size))
-              (b/b-swap! minefield (fn [_ g] (core/generate-minefield (g :rows) (g :cols) (min (* (g :rows) (g :cols)) (g :mines)))))
-              (b/b-do [x] (config! (select frame [:#canvas]) :user-data (listen (select frame [:#canvas]) :mouse-released click-action)) (repaint! frame))))
-    (b/bind minefield (b/b-swap! revealed (fn [_ f] (core/unrevealed-field f))))
+              (b/b-do [_] (when-let [remove-listen-fn (user-data (select frame [:#canvas]))] (remove-listen-fn)))
+              (b/bind
+                (b/transform #(core/generate-minefield (% :rows) (% :cols) (min (* (% :rows) (% :cols)) (% :mines))))
+                (b/tee
+                  (b/b-swap! minefield (fn [_ m] m))
+                  (b/b-swap! revealed (fn [_ m] (core/unrevealed-field m)))))
+              (b/b-do [_] (config! (select frame [:#canvas]) :user-data (listen (select frame [:#canvas]) :mouse-released click-action)))))
     (b/bind revealed
             (b/notify-soon)
             (b/tee
-              (b/b-do [x] (repaint! frame))
+              (b/b-do [_] (repaint! frame))
               (b/bind (b/filter #(core/dead? %)) (b/b-do [_] (alert frame "KABOOM!") (disable-canvas frame)))
               (b/bind (b/filter #(core/won? %)) (b/b-do [_] (alert frame "WINRAR!") (disable-canvas frame)))))
     (reset! game {:cols cols, :rows rows, :mines mines :id 0})
